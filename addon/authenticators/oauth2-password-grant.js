@@ -42,6 +42,15 @@ export default BaseAuthenticator.extend({
   clientId: null,
 
   /**
+
+    @property clientSecret
+    @type String
+    @default null
+    @public
+  */
+  clientSecret: null,
+  
+  /**
     The endpoint on the server that authentication and token refresh requests
     are sent to.
 
@@ -143,7 +152,14 @@ export default BaseAuthenticator.extend({
   */
   authenticate(identification, password, scope = []) {
     return new RSVP.Promise((resolve, reject) => {
-      const data                = { 'grant_type': 'password', username: identification, password };
+      const data                = {
+        'grant_type': 'password',
+        client_id: this.get('clientId'),
+        client_secret: this.get('clientSecret'),
+        scope: 'read write',
+        username: identification,
+        password
+      };
       const serverTokenEndpoint = this.get('serverTokenEndpoint');
       const scopesString = Ember.makeArray(scope).join(' ');
       if (!Ember.isEmpty(scopesString)) {
@@ -224,9 +240,10 @@ export default BaseAuthenticator.extend({
       contentType: 'application/x-www-form-urlencoded'
     };
     const clientId = this.get('clientId');
+    const clientSecret = this.get('clientSecret');
 
     if (!isEmpty(clientId)) {
-      const base64ClientId = window.btoa(clientId.concat(':'));
+      const base64ClientId = window.btoa(clientId.concat(':').concat(clientSecret));
       Ember.merge(options, {
         headers: {
           Authorization: `Basic ${base64ClientId}`
